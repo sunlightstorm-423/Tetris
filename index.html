@@ -39,7 +39,7 @@
     background:#0d0c20;
     border-radius:10px;
     box-shadow:0 0 0 1px rgba(255,255,255,.09), 0 18px 46px rgba(0,0,0,.55);
-    max-width:min(110vw,400px); height:auto; display:block;
+    max-width:min(92vw,300px); height:auto; display:block;
   }
   .overlay{
     position:absolute; inset:0; border-radius:10px; line-height:1.5;
@@ -103,7 +103,7 @@
 
     /* 棋盘缩小（内部仍为 300×600 高分辨率，只缩显示尺寸） */
     #board{
-      width:min(94vw,300px) !important; height:auto !important;
+      width:min(92vw,300px) !important; height:auto !important;
       border-radius:8px; box-shadow:0 0 0 1px rgba(255,255,255,.09), 0 10px 26px rgba(0,0,0,.5);
     }
 
@@ -297,6 +297,7 @@ function resetGame(){
 
 function startGame(){
   if(state === 'playing') return;
+  if(state === 'over') resetGame();   // ← 修复：游戏结束后重新开始时先重置棋盘
   state = 'playing';
   hideOverlay();
   lastDrop = performance.now();
