@@ -83,8 +83,11 @@
     border:1px solid rgba(255,255,255,.14); font-size:11px; color:#cdd5f5;
   }
 
+  /* ---- 棋盘 + 按钮纵向列（按钮位于游戏区域正下方） ---- */
+  .left-col{ display:flex; flex-direction:column; align-items:center; gap:12px; }
+
   /* ---- 触屏按钮 ---- */
-  .pad{ display:flex; gap:9px; margin-top:16px; flex-wrap:wrap; justify-content:center; }
+  .pad{ display:flex; gap:9px; justify-content:center; }
   .pad button{
     width:54px; height:54px; border-radius:14px; font-size:20px; color:#dfe7ff;
     background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.13);
@@ -92,10 +95,32 @@
   }
   .pad button:active{ background:rgba(34,211,238,.28); transform:scale(.96); }
 
-  @media (max-width:560px){
-    h1{ font-size:24px; margin-bottom:12px; }
-    .layout{ flex-direction:column; align-items:center; }
-    .side{ width:min(88vw,300px); }
+  /* ---- 手机竖屏：标题 + 棋盘 + 按钮 + 分数行，全部一屏内显示 ---- */
+  @media (max-width:640px){
+    body{ padding:10px 10px 16px; }
+    h1{ font-size:20px; letter-spacing:.3em; margin-bottom:8px; filter:none; }
+    .layout{ flex-direction:column; align-items:center; gap:10px; }
+
+    /* 棋盘缩小（内部仍为 300×600 高分辨率，只缩显示尺寸） */
+    #board{
+      width:min(72vw,200px) !important; height:auto !important;
+      border-radius:8px; box-shadow:0 0 0 1px rgba(255,255,255,.09), 0 10px 26px rgba(0,0,0,.5);
+    }
+
+    .pad button{ width:56px; height:48px; font-size:19px; border-radius:12px; }
+
+    /* 侧栏 → 底部紧凑一行：得分 / 等级 / 行数 + 迷你“下一个”预览 */
+    .side{ flex-direction:row; align-items:center; gap:8px; width:min(96vw,375px); }
+    .side .card{ padding:8px 12px; border-radius:10px; }
+    .stats{ grid-template-columns:auto auto auto; gap:14px; flex:1; justify-items:center; }
+    .stat .k{ font-size:10px; letter-spacing:.15em; margin-bottom:1px; }
+    .stat .v{ font-size:17px; text-shadow:none; }
+    .next-card{ gap:4px; align-items:center; }
+    .next-card .k{ display:none; }
+    #next{ width:56px !important; height:56px !important; border-radius:6px; }
+
+    /* 操作说明在手机上隐藏，节省纵向空间（按钮自带图标） */
+    .help{ display:none; }
   }
 </style>
 </head>
@@ -104,12 +129,23 @@
 <h1>俄罗斯方块</h1>
 
 <div class="layout">
-  <div class="board-wrap">
-    <canvas id="board"></canvas>
-    <div class="overlay" id="overlay">
-      <h2 id="ovTitle">俄罗斯方块</h2>
-      <p id="ovText">← → 移动 · ↑ 旋转 · ↓ 软降 · 空格 硬降<br>填满一行即可消除，等级越高下落越快！</p>
-      <button id="ovBtn">开始游戏</button>
+  <div class="left-col">
+    <div class="board-wrap">
+      <canvas id="board"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">俄罗斯方块</h2>
+        <p id="ovText">← → 移动 · ↑ 旋转 · ↓ 软降 · 空格 硬降<br>填满一行即可消除，等级越高下落越快！</p>
+        <button id="ovBtn">开始游戏</button>
+      </div>
+    </div>
+
+    <div class="pad">
+      <button data-act="left" title="左移">◀</button>
+      <button data-act="right" title="右移">▶</button>
+      <button data-act="down" title="软降（按住连发）">▼</button>
+      <button data-act="rotate" title="旋转">⟳</button>
+      <button data-act="hard" title="硬降">⤓</button>
+      <button data-act="pause" title="暂停 / 继续">❚❚</button>
     </div>
   </div>
 
@@ -133,15 +169,6 @@
       <kbd>P</kbd> 暂停 / 继续 · <kbd>R</kbd> 重新开始
     </div>
   </aside>
-</div>
-
-<div class="pad">
-  <button data-act="left" title="左移">◀</button>
-  <button data-act="right" title="右移">▶</button>
-  <button data-act="down" title="软降（按住连发）">▼</button>
-  <button data-act="rotate" title="旋转">⟳</button>
-  <button data-act="hard" title="硬降">⤓</button>
-  <button data-act="pause" title="暂停 / 继续">❚❚</button>
 </div>
 
 <script>
