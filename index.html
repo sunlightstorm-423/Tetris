@@ -103,7 +103,7 @@
 
     /* 棋盘缩小（内部仍为 300×600 高分辨率，只缩显示尺寸） */
     #board{
-      width:min(92vw,300px) !important; height:auto !important;
+      width:min(86.4vw,240px) !important; height:auto !important;
       border-radius:8px; box-shadow:0 0 0 1px rgba(255,255,255,.09), 0 10px 26px rgba(0,0,0,.5);
     }
 
@@ -297,7 +297,6 @@ function resetGame(){
 
 function startGame(){
   if(state === 'playing') return;
-  if(state === 'over') resetGame();   // ← 修复：游戏结束后重新开始时先重置棋盘
   state = 'playing';
   hideOverlay();
   lastDrop = performance.now();
@@ -456,14 +455,23 @@ function draw(){
     }
 
   if(piece && state !== 'over'){
-    /* 幽灵投影 */
+    /* 幽灵投影：半透明方块预示落点（与当前方块同色，带淡描边） */
     const gy = ghostY();
-    bctx.globalAlpha = .25;
+    bctx.globalAlpha = .28;
+    bctx.fillStyle = PIECES[piece.type].color;
     for(let y = 0; y < piece.m.length; y++)
       for(let x = 0; x < piece.m[y].length; x++){
         if(!piece.m[y][x]) continue;
         const ny = gy + y;
         if(ny >= 0) bctx.fillRect((piece.x + x) * CELL, ny * CELL, CELL, CELL);
+      }
+    bctx.globalAlpha = .55;
+    bctx.strokeStyle = PIECES[piece.type].color;
+    for(let y = 0; y < piece.m.length; y++)
+      for(let x = 0; x < piece.m[y].length; x++){
+        if(!piece.m[y][x]) continue;
+        const ny = gy + y;
+        if(ny >= 0) bctx.strokeRect((piece.x + x) * CELL + .5, ny * CELL + .5, CELL - 1, CELL - 1);
       }
     bctx.globalAlpha = 1;
 
@@ -517,7 +525,8 @@ window.addEventListener('keydown', (e) => {
   if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp',' '].includes(k)) e.preventDefault();
 
   if(k === 'Enter'){
-    if(state !== 'playing') startGame();
+    if(state === 'over'){ resetGame(); startGame(); }   // 结束重开：先清空棋盘/分数
+    else if(state !== 'playing') startGame();
     return;
   }
   if(k === 'r' || k === 'R'){ resetGame(); startGame(); return; }
@@ -537,6 +546,7 @@ window.addEventListener('keydown', (e) => {
 
 overlayEl.addEventListener('click', () => {
   if(state === 'paused') togglePause();
+  else if(state === 'over'){ resetGame(); startGame(); }   // 结束重开：先清空棋盘/分数
   else startGame();
 });
 window.addEventListener('blur', () => { if(state === 'playing') togglePause(); });
