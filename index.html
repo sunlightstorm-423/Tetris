@@ -58,6 +58,15 @@
     transition:transform .12s ease;
   }
   .overlay button:hover{ transform:translateY(-1px) scale(1.03); }
+  .new-record{
+    color:#facc15; font-weight:700; font-size:14px;
+    text-shadow:0 0 10px rgba(250,204,21,.5);
+    animation:pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ opacity:1; transform:scale(1); }
+    50%{ opacity:.75; transform:scale(1.06); }
+  }
 
   /* ---- 侧栏 ---- */
   .side{ width:176px; display:flex; flex-direction:column; gap:12px; }
@@ -71,6 +80,13 @@
     font-family:Consolas,"JetBrains Mono",monospace; font-size:24px; font-weight:700;
     color:#fff; text-shadow:0 0 12px rgba(34,211,238,.45);
   }
+  /* 最高分突出显示 */
+  .stat.best .k{ color:#facc15; }
+  .stat.best .v{
+    color:#facc15;
+    text-shadow:0 0 12px rgba(250,204,21,.55);
+  }
+
   .next-card{ display:flex; flex-direction:column; align-items:center; gap:6px; }
   .next-card .k{ font-size:12px; color:var(--dim); letter-spacing:.25em; align-self:flex-start; }
   #next{ background:#0d0c20; border-radius:8px; display:block; }
@@ -82,6 +98,13 @@
     border-radius:5px; background:rgba(255,255,255,.08);
     border:1px solid rgba(255,255,255,.14); font-size:11px; color:#cdd5f5;
   }
+  .reset-best{
+    display:block; width:100%; margin-top:8px; padding:5px 0;
+    font-size:11px; letter-spacing:.1em; color:var(--dim);
+    background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.10);
+    border-radius:6px; cursor:pointer; transition:all .15s ease;
+  }
+  .reset-best:hover{ color:#f87171; border-color:rgba(248,113,113,.35); background:rgba(248,113,113,.08); }
 
   /* ---- 棋盘 + 按钮纵向列（按钮位于游戏区域正下方） ---- */
   .left-col{ display:flex; flex-direction:column; align-items:center; gap:12px; }
@@ -133,12 +156,13 @@
       border-color:rgba(34,211,238,.30);
     }
 
-    /* 侧栏 → 底部紧凑一行：得分 / 等级 / 行数 + 迷你“下一个”预览 */
+    /* 侧栏 → 底部紧凑一行：得分 / 最高分 / 等级 / 行数 + 迷你“下一个”预览 */
     .side{ flex-direction:row; align-items:center; gap:8px; width:min(96vw,375px); }
     .side .card{ padding:8px 12px; border-radius:10px; }
-    .stats{ grid-template-columns:auto auto auto; gap:14px; flex:1; justify-items:center; }
-    .stat .k{ font-size:10px; letter-spacing:.15em; margin-bottom:1px; }
-    .stat .v{ font-size:17px; text-shadow:none; }
+    .stats{ grid-template-columns:auto auto auto auto; gap:10px; flex:1; justify-items:center; }
+    .stat .k{ font-size:9px; letter-spacing:.1em; margin-bottom:1px; }
+    .stat .v{ font-size:15px; text-shadow:none; }
+    .stat.best .v{ text-shadow:none; }
     .next-card{ gap:4px; align-items:center; }
     .next-card .k{ display:none; }
     #next{ width:56px !important; height:56px !important; border-radius:6px; }
@@ -175,6 +199,7 @@
   <aside class="side">
     <div class="card stats">
       <div class="stat"><div class="k">得分 SCORE</div><div class="v" id="scoreVal">0</div></div>
+      <div class="stat best"><div class="k">最高 BEST</div><div class="v" id="bestVal">0</div></div>
       <div class="stat"><div class="k">等级 LEVEL</div><div class="v" id="levelVal">1</div></div>
       <div class="stat"><div class="k">行数 LINES</div><div class="v" id="linesVal">0</div></div>
     </div>
@@ -189,7 +214,8 @@
       <kbd>←</kbd><kbd>→</kbd> 移动<br>
       <kbd>↑</kbd>/<kbd>X</kbd> 顺时针旋转 · <kbd>Z</kbd> 逆时针<br>
       <kbd>↓</kbd> 软降 +1 分/格 · <kbd>空格</kbd> 硬降 +2 分/格<br>
-      <kbd>P</kbd> 暂停 / 继续 · <kbd>R</kbd> 重新开始
+      <kbd>P</kbd> 暂停 / 继续 · <kbd>R</kbd> 重新开始<br>
+      <button class="reset-best" id="resetBestBtn">清除最高分记录</button>
     </div>
   </aside>
 </div>
@@ -201,6 +227,9 @@
 const COLS = 10, ROWS = 20, CELL = 30;
 const NEXT_W = 140, NEXT_H = 140;
 const LINE_SCORES = [0, 100, 300, 500, 800];
+
+/* 最高分本地存储键名（带版本号，便于将来升级） */
+const BEST_KEY = 'tetris.bestScore.v1';
 
 const PIECES = {
   I: { color:'#22d3ee', m:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]] },
@@ -233,8 +262,41 @@ const ovTitle   = document.getElementById('ovTitle');
 const ovText    = document.getElementById('ovText');
 const ovBtn     = document.getElementById('ovBtn');
 const scoreVal  = document.getElementById('scoreVal');
+const bestVal   = document.getElementById('bestVal');
 const levelVal  = document.getElementById('levelVal');
 const linesVal  = document.getElementById('linesVal');
+const resetBestBtn = document.getElementById('resetBestBtn');
+
+/* ================= 最高分本地存储 ================= */
+function loadBest(){
+  try{
+    const raw = localStorage.getItem(BEST_KEY);
+    const n = raw === null ? 0 : parseInt(raw, 10);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  }catch(e){
+    /* 隐私模式 / 存储被禁用时静默降级为 0 */
+    return 0;
+  }
+}
+function saveBest(v){
+  try{ localStorage.setItem(BEST_KEY, String(v)); }catch(e){ /* 忽略写入失败 */ }
+}
+
+let bestScore = loadBest();
+let isNewRecord = false;   // 本局是否打破了最高分
+
+function updateBestHud(){ bestVal.textContent = bestScore; }
+
+/* 分数变化时实时检测是否刷新记录（让玩家在游戏过程中就能看到最高分被超越） */
+function checkBest(){
+  if(score > bestScore){
+    bestScore = score;
+    saveBest(bestScore);
+    updateBestHud();
+    return true;
+  }
+  return false;
+}
 
 /* ================= 游戏状态 ================= */
 let board, piece, bag = [], queue = [];
@@ -314,6 +376,7 @@ function resetGame(){
   board = emptyBoard();
   bag = []; queue = [];
   score = 0; lines = 0; level = 1; dropInterval = speedFor(1);
+  isNewRecord = false;
   spawnPiece();
   updateHud();
 }
@@ -327,7 +390,18 @@ function startGame(){
 
 function gameOver(){
   state = 'over';
-  showOverlay('游戏结束', `本局得分 <b>${score}</b> · 消除行数 ${lines}`, '重新开始');
+  /* 结束时再确认一次最高分（正常情况下 checkBest 已在过程中写入） */
+  if(checkBest()) isNewRecord = true;
+
+  const recordHtml = isNewRecord
+    ? '<br><span class="new-record">🎉 新纪录！</span>'
+    : '<br>历史最高 <b>' + bestScore + '</b>';
+
+  showOverlay(
+    '游戏结束',
+    `本局得分 <b>${score}</b> · 消除行数 ${lines}${recordHtml}`,
+    '重新开始'
+  );
   beep(220, .18, 'triangle', .06);
   setTimeout(() => beep(150, .3, 'triangle', .06), 140);
 }
@@ -368,6 +442,7 @@ function lockPiece(){
     score += LINE_SCORES[cleared] * level;
     level = Math.floor(lines / 10) + 1;
     dropInterval = speedFor(level);
+    checkBest();               // 消除得分后立即检查是否刷新纪录
     beep(320 + cleared * 110, .14, 'triangle', .06);
   }
 
@@ -386,14 +461,14 @@ function tryMove(dx, dy){
 
 function softDrop(){
   if(state !== 'playing' || !piece) return;
-  if(tryMove(0, 1)){ score += 1; updateHud(); }
+  if(tryMove(0, 1)){ score += 1; checkBest(); updateHud(); }
   else { lockPiece(); draw(); }
 }
 
 function hardDrop(){
   if(state !== 'playing' || !piece) return;
   const d = ghostY() - piece.y;
-  if(d > 0){ score += 2 * d; updateHud(); }
+  if(d > 0){ score += 2 * d; checkBest(); updateHud(); }
   piece.y = ghostY();
   beep(140, .08, 'triangle', .07);
   lockPiece();
@@ -429,6 +504,7 @@ function updateHud(){
   scoreVal.textContent = score;
   levelVal.textContent = level;
   linesVal.textContent = lines;
+  updateBestHud();
 }
 function showOverlay(title, html, btn){
   ovTitle.innerHTML = title;
@@ -600,6 +676,17 @@ document.querySelectorAll('.pad button').forEach(btn => {
     }
   });
   ['pointerup','pointerleave','pointercancel'].forEach(ev => btn.addEventListener(ev, stop));
+});
+
+/* ================= 清除最高分 ================= */
+resetBestBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if(!confirm('确定要清除最高分记录吗？此操作不可恢复。')) return;
+  bestScore = 0;
+  try{ localStorage.removeItem(BEST_KEY); }catch(err){}
+  updateBestHud();
+  resetBestBtn.textContent = '已清除 ✓';
+  setTimeout(() => { resetBestBtn.textContent = '清除最高分记录'; }, 1500);
 });
 
 /* ================= 启动 ================= */
