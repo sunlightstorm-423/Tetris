@@ -68,30 +68,45 @@
     50%{ opacity:.75; transform:scale(1.06); }
   }
 
-  /* ---- 侧栏 ---- */
-  .side{ width:176px; display:flex; flex-direction:column; gap:12px; }
+  /* ---- 侧栏：桌面端改为「下一个在左，数据在右」横向排列 ---- */
+  .side{
+    width:auto;
+    display:flex; flex-direction:row; flex-wrap:wrap;
+    align-items:flex-start; justify-content:center;
+    gap:12px;
+  }
   .card{
     background:var(--panel); border:1px solid var(--panel-border);
     border-radius:12px; padding:12px 14px;
   }
+
+  /* 左侧：下一个方块 */
+  .next-card{
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    width:176px;
+  }
+  .next-card .k{ font-size:12px; color:var(--dim); letter-spacing:.25em; align-self:flex-start; }
+  #next{ background:#0d0c20; border-radius:8px; display:block; }
+
+  /* 右侧：数据 */
+  .stats-card{ width:176px; }
   .stats{ display:grid; grid-template-columns:1fr; gap:8px; }
   .stat .k{ font-size:12px; color:var(--dim); letter-spacing:.25em; margin-bottom:3px; }
   .stat .v{
     font-family:Consolas,"JetBrains Mono",monospace; font-size:24px; font-weight:700;
     color:#fff; text-shadow:0 0 12px rgba(34,211,238,.45);
   }
-  /* 最高分突出显示 */
   .stat.best .k{ color:#facc15; }
   .stat.best .v{
     color:#facc15;
     text-shadow:0 0 12px rgba(250,204,21,.55);
   }
 
-  .next-card{ display:flex; flex-direction:column; align-items:center; gap:6px; }
-  .next-card .k{ font-size:12px; color:var(--dim); letter-spacing:.25em; align-self:flex-start; }
-  #next{ background:#0d0c20; border-radius:8px; display:block; }
-
-  .help{ font-size:12.5px; color:var(--dim); line-height:2; }
+  /* 操作说明：整行放在最下方 */
+  .help{
+    flex:1 0 100%;
+    font-size:12.5px; color:var(--dim); line-height:2;
+  }
   .help b{ color:var(--text); font-weight:600; }
   kbd{
     display:inline-block; min-width:20px; text-align:center; padding:1px 6px; margin:0 3px;
@@ -118,13 +133,12 @@
   }
   .pad button:active{ background:rgba(34,211,238,.28); transform:scale(.96); }
 
-  /* ---- 手机竖屏：标题 + 棋盘 + 按钮 + 分数行，全部一屏内显示 ---- */
+  /* ---- 手机竖屏 ---- */
   @media (max-width:640px){
     body{ padding:10px 10px 16px; }
     h1{ font-size:20px; letter-spacing:.3em; margin-bottom:8px; filter:none; }
     .layout{ flex-direction:column; align-items:center; gap:10px; }
 
-    /* 棋盘缩小（内部仍为 300×600 高分辨率，只缩显示尺寸） */
     #board{
       width:min(86.4vw,240px) !important; height:auto !important;
       border-radius:8px; box-shadow:0 0 0 1px rgba(255,255,255,.09), 0 10px 26px rgba(0,0,0,.5);
@@ -141,14 +155,12 @@
       width:48px; height:48px; font-size:18px; border-radius:12px;
       flex:0 0 auto;
     }
-    /* 左移、右移、旋转 三键占据屏幕总宽度的 60% */
     .pad button[data-act="left"],
     .pad button[data-act="right"],
     .pad button[data-act="rotate"]{
       flex:1 1 0;
       width:auto; height:56px; font-size:22px; border-radius:14px;
     }
-    /* 旋转键居中且更大 */
     .pad button[data-act="rotate"]{
       flex:1.4 1 0;
       height:64px; font-size:26px; border-radius:16px;
@@ -156,18 +168,32 @@
       border-color:rgba(34,211,238,.30);
     }
 
-    /* 侧栏 → 底部紧凑一行：得分 / 最高分 / 等级 / 行数 + 迷你“下一个”预览 */
-    .side{ flex-direction:row; align-items:center; gap:8px; width:min(96vw,375px); }
-    .side .card{ padding:8px 12px; border-radius:10px; }
-    .stats{ grid-template-columns:auto auto auto auto; gap:10px; flex:1; justify-items:center; }
+    /* 侧栏：下一个在左，数据在右，一行排开 */
+    .side{
+      flex-direction:row;
+      flex-wrap:nowrap;
+      align-items:center;
+      gap:8px;
+      width:min(96vw,375px);
+    }
+    .side .card{ padding:8px 10px; border-radius:10px; }
+
+    .next-card{
+      width:auto; flex:0 0 auto;
+      gap:4px; align-items:center;
+    }
+    .next-card .k{ display:none; }
+    #next{ width:52px !important; height:52px !important; border-radius:6px; }
+
+    .stats-card{
+      width:auto; flex:1 1 auto;
+    }
+    .stats{ grid-template-columns:auto auto auto auto; gap:10px; justify-items:center; }
     .stat .k{ font-size:9px; letter-spacing:.1em; margin-bottom:1px; }
     .stat .v{ font-size:15px; text-shadow:none; }
     .stat.best .v{ text-shadow:none; }
-    .next-card{ gap:4px; align-items:center; }
-    .next-card .k{ display:none; }
-    #next{ width:56px !important; height:56px !important; border-radius:6px; }
 
-    /* 操作说明在手机上隐藏，节省纵向空间（按钮自带图标） */
+    /* 操作说明在手机上隐藏 */
     .help{ display:none; }
   }
 </style>
@@ -197,18 +223,23 @@
   </div>
 
   <aside class="side">
-    <div class="card stats">
-      <div class="stat"><div class="k">得分 SCORE</div><div class="v" id="scoreVal">0</div></div>
-      <div class="stat best"><div class="k">最高 BEST</div><div class="v" id="bestVal">0</div></div>
-      <div class="stat"><div class="k">等级 LEVEL</div><div class="v" id="levelVal">1</div></div>
-      <div class="stat"><div class="k">行数 LINES</div><div class="v" id="linesVal">0</div></div>
-    </div>
-
+    <!-- 左：下一个方块 -->
     <div class="card next-card">
       <span class="k">下一个 NEXT</span>
       <canvas id="next"></canvas>
     </div>
 
+    <!-- 右：数据 -->
+    <div class="card stats-card">
+      <div class="stats">
+        <div class="stat"><div class="k">得分 SCORE</div><div class="v" id="scoreVal">0</div></div>
+        <div class="stat best"><div class="k">最高 BEST</div><div class="v" id="bestVal">0</div></div>
+        <div class="stat"><div class="k">等级 LEVEL</div><div class="v" id="levelVal">1</div></div>
+        <div class="stat"><div class="k">行数 LINES</div><div class="v" id="linesVal">0</div></div>
+      </div>
+    </div>
+
+    <!-- 整行：操作说明 -->
     <div class="card help">
       <b>操作说明</b><br>
       <kbd>←</kbd><kbd>→</kbd> 移动<br>
@@ -228,7 +259,6 @@ const COLS = 10, ROWS = 20, CELL = 30;
 const NEXT_W = 140, NEXT_H = 140;
 const LINE_SCORES = [0, 100, 300, 500, 800];
 
-/* 最高分本地存储键名（带版本号，便于将来升级） */
 const BEST_KEY = 'tetris.bestScore.v1';
 
 const PIECES = {
@@ -274,20 +304,18 @@ function loadBest(){
     const n = raw === null ? 0 : parseInt(raw, 10);
     return Number.isFinite(n) && n >= 0 ? n : 0;
   }catch(e){
-    /* 隐私模式 / 存储被禁用时静默降级为 0 */
     return 0;
   }
 }
 function saveBest(v){
-  try{ localStorage.setItem(BEST_KEY, String(v)); }catch(e){ /* 忽略写入失败 */ }
+  try{ localStorage.setItem(BEST_KEY, String(v)); }catch(e){}
 }
 
 let bestScore = loadBest();
-let isNewRecord = false;   // 本局是否打破了最高分
+let isNewRecord = false;
 
 function updateBestHud(){ bestVal.textContent = bestScore; }
 
-/* 分数变化时实时检测是否刷新记录（让玩家在游戏过程中就能看到最高分被超越） */
 function checkBest(){
   if(score > bestScore){
     bestScore = score;
@@ -300,14 +328,14 @@ function checkBest(){
 
 /* ================= 游戏状态 ================= */
 let board, piece, bag = [], queue = [];
-let state = 'idle';            // idle | playing | paused | over
+let state = 'idle';
 let score = 0, lines = 0, level = 1;
 let dropInterval = speedFor(1);
 let lastDrop = performance.now();
 
 function speedFor(l){ return Math.max(90, 720 - (l - 1) * 65); }
 
-/* ================= 音效（WebAudio 小喇叭） ================= */
+/* ================= 音效 ================= */
 let audioCtx = null;
 function beep(freq, dur, type, vol){
   try{
@@ -322,7 +350,7 @@ function beep(freq, dur, type, vol){
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
     o.connect(g); g.connect(audioCtx.destination);
     o.start(); o.stop(audioCtx.currentTime + dur);
-  }catch(e){ /* 无音频环境时静默 */ }
+  }catch(e){}
 }
 
 /* ================= 核心逻辑 ================= */
@@ -390,7 +418,6 @@ function startGame(){
 
 function gameOver(){
   state = 'over';
-  /* 结束时再确认一次最高分（正常情况下 checkBest 已在过程中写入） */
   if(checkBest()) isNewRecord = true;
 
   const recordHtml = isNewRecord
@@ -442,7 +469,7 @@ function lockPiece(){
     score += LINE_SCORES[cleared] * level;
     level = Math.floor(lines / 10) + 1;
     dropInterval = speedFor(level);
-    checkBest();               // 消除得分后立即检查是否刷新纪录
+    checkBest();
     beep(320 + cleared * 110, .14, 'triangle', .06);
   }
 
@@ -531,7 +558,6 @@ function drawBlock(ctx, x, y, s, color){
 function draw(){
   bctx.clearRect(0, 0, COLS * CELL, ROWS * CELL);
 
-  /* 网格线 */
   bctx.strokeStyle = 'rgba(255,255,255,.045)';
   bctx.lineWidth = 1;
   for(let x = 1; x < COLS; x++){
@@ -547,14 +573,12 @@ function draw(){
     bctx.stroke();
   }
 
-  /* 已固定的方块 */
   for(let y = 0; y < ROWS; y++)
     for(let x = 0; x < COLS; x++){
       if(board[y][x]) drawBlock(bctx, x * CELL, y * CELL, CELL, board[y][x]);
     }
 
   if(piece && state !== 'over'){
-    /* 幽灵投影：半透明方块预示落点（与当前方块同色，带淡描边） */
     const gy = ghostY();
     bctx.globalAlpha = .28;
     bctx.fillStyle = PIECES[piece.type].color;
@@ -574,7 +598,6 @@ function draw(){
       }
     bctx.globalAlpha = 1;
 
-    /* 当前方块 */
     for(let y = 0; y < piece.m.length; y++)
       for(let x = 0; x < piece.m[y].length; x++){
         if(!piece.m[y][x]) continue;
@@ -624,7 +647,7 @@ window.addEventListener('keydown', (e) => {
   if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp',' '].includes(k)) e.preventDefault();
 
   if(k === 'Enter'){
-    if(state === 'over'){ resetGame(); startGame(); }   // 结束重开：先清空棋盘/分数
+    if(state === 'over'){ resetGame(); startGame(); }
     else if(state !== 'playing') startGame();
     return;
   }
@@ -645,7 +668,7 @@ window.addEventListener('keydown', (e) => {
 
 overlayEl.addEventListener('click', () => {
   if(state === 'paused') togglePause();
-  else if(state === 'over'){ resetGame(); startGame(); }   // 结束重开：先清空棋盘/分数
+  else if(state === 'over'){ resetGame(); startGame(); }
   else startGame();
 });
 window.addEventListener('blur', () => { if(state === 'playing') togglePause(); });
@@ -668,7 +691,6 @@ document.querySelectorAll('.pad button').forEach(btn => {
     e.preventDefault();
     if(state !== 'playing' && act !== 'pause') return;
     padActions[act]();
-    /* 移动 / 软降支持按住连发 */
     if(act === 'left' || act === 'right' || act === 'down'){
       timer = setTimeout(() => {
         repeat = setInterval(() => { if(state === 'playing') padActions[act](); }, 130);
@@ -690,7 +712,7 @@ resetBestBtn.addEventListener('click', (e) => {
 });
 
 /* ================= 启动 ================= */
-resetGame();          // idle：展示空棋盘 + 开始提示
+resetGame();
 requestAnimationFrame(tick);
 </script>
 </body>
