@@ -107,7 +107,31 @@
       border-radius:8px; box-shadow:0 0 0 1px rgba(255,255,255,.09), 0 10px 26px rgba(0,0,0,.5);
     }
 
-    .pad button{ width:56px; height:48px; font-size:19px; border-radius:12px; }
+    /* 触屏按钮：暂停 | 左移 | 旋转(大) | 右移 | 硬降 */
+    .pad{
+      width:min(96vw,375px);
+      gap:6px;
+      justify-content:space-between;
+      align-items:center;
+    }
+    .pad button{
+      width:48px; height:48px; font-size:18px; border-radius:12px;
+      flex:0 0 auto;
+    }
+    /* 左移、右移、旋转 三键占据屏幕总宽度的 60% */
+    .pad button[data-act="left"],
+    .pad button[data-act="right"],
+    .pad button[data-act="rotate"]{
+      flex:1 1 0;
+      width:auto; height:56px; font-size:22px; border-radius:14px;
+    }
+    /* 旋转键居中且更大 */
+    .pad button[data-act="rotate"]{
+      flex:1.4 1 0;
+      height:64px; font-size:26px; border-radius:16px;
+      background:rgba(34,211,238,.14);
+      border-color:rgba(34,211,238,.30);
+    }
 
     /* 侧栏 → 底部紧凑一行：得分 / 等级 / 行数 + 迷你“下一个”预览 */
     .side{ flex-direction:row; align-items:center; gap:8px; width:min(96vw,375px); }
@@ -140,12 +164,11 @@
     </div>
 
     <div class="pad">
-      <button data-act="left" title="左移">◀</button>
-      <button data-act="right" title="右移">▶</button>
-      <button data-act="down" title="软降（按住连发）">▼</button>
-      <button data-act="rotate" title="旋转">⟳</button>
-      <button data-act="hard" title="硬降">⤓</button>
       <button data-act="pause" title="暂停 / 继续">❚❚</button>
+      <button data-act="left" title="左移">◀</button>
+      <button data-act="rotate" title="旋转">⟳</button>
+      <button data-act="right" title="右移">▶</button>
+      <button data-act="hard" title="硬降">⤓</button>
     </div>
   </div>
 
